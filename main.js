@@ -5,7 +5,7 @@ const koszyk = [];
 
 // Pobiera listę produktów z pliku z danymi i pokazuje je jako przyciski.
 async function wczytajProdukty() {
-  const odpowiedz = await fetch('./produkty.json');
+  const odpowiedz = await fetch('./products.json');
   const produkty = await odpowiedz.json();
 
   const listaProduktow = document.getElementById('lista-produktow');
