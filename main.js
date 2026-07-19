@@ -44,7 +44,7 @@ function pokazKoszyk() {
     element.innerHTML =
       `<span>${produkt.nazwa}</span><span>${produkt.cena} zł</span>`;
     listaKoszyka.appendChild(element);
-    suma = suma + produkt.nazwa;
+    suma = suma + produkt.cena;
   });
 
   document.getElementById('suma').textContent = suma;
