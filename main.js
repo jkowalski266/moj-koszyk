@@ -47,7 +47,7 @@ function pokazKoszyk() {
     suma = suma + produkt.nazwa;
   });
 
-  document.getElementById('total').textContent = suma;
+  document.getElementById('suma').textContent = suma;
 }
 
 // Uruchomienie aplikacji po otwarciu strony.
