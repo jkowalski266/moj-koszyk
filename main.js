@@ -51,5 +51,5 @@ function pokazKoszyk() {
 }
 
 // Uruchomienie aplikacji po otwarciu strony.
-wczytajProdukty(
+wczytajProdukty();
 pokazKoszyk();
