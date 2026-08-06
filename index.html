@@ -15,6 +15,9 @@
     <main class="uklad">
       <section class="karta" id="sklep">
         <h2>Produkty</h2>
+        <p id="status-danych" class="status-danych" aria-live="polite">
+          Ładowanie produktów…
+        </p>
         <div id="lista-produktow" class="produkty"></div>
       </section>
 
@@ -23,8 +26,12 @@
         <ul id="lista-koszyka" class="koszyk-lista"></ul>
         <div class="podsumowanie">
           <span>Razem</span>
-          <span class="kwota"><span id="suma">0</span> zł</span>
+          <span class="kwota" id="suma">0,00 zł</span>
         </div>
+        <button class="przycisk-api" id="wyslij-podsumowanie" type="button">
+          Wyślij testowe podsumowanie do API
+        </button>
+        <p id="status-api" class="status-api" aria-live="polite"></p>
       </section>
     </main>
 

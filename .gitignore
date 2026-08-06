@@ -1,3 +1,10 @@
 node_modules/
 dist/
 pnpm-workspace.yaml
+
+# Lokalne pliki środowiskowe mogą zawierać sekrety.
+.env
+.env.*
+
+# Bezpieczny szablon bez prawdziwych wartości pozostaje w repozytorium.
+!.env.example

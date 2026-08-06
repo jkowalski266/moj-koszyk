@@ -71,6 +71,16 @@ body {
   color: var(--tekst-jasny);
 }
 
+.status-danych {
+  margin: -8px 0 16px;
+  color: var(--tekst-jasny);
+  font-size: 0.8rem;
+}
+
+.status-danych--blad {
+  color: #b42318;
+}
+
 .produkty {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
@@ -160,4 +170,28 @@ body {
   color: var(--tekst);
   text-transform: none;
   letter-spacing: normal;
+}
+
+.przycisk-api {
+  width: 100%;
+  margin-top: 16px;
+  border: 0;
+  border-radius: 10px;
+  padding: 11px 14px;
+  background: var(--akcent);
+  color: #fff;
+  cursor: pointer;
+  font: inherit;
+  font-weight: 600;
+}
+
+.przycisk-api:hover {
+  background: var(--akcent-ciemny);
+}
+
+.status-api {
+  min-height: 1.25rem;
+  margin: 10px 0 0;
+  color: var(--tekst-jasny);
+  font-size: 0.82rem;
 }
