@@ -1,5 +1,9 @@
 # Audyt Red Team — tydzień 4
 
+> Status historyczny. Wszystkie opisane niżej problemy zostały naprawione przed
+> publikacją. Aktualny wynik to 52/52 testów z tego pliku oraz 63/63 testów
+> łącznie. Szczegóły: `AUDYT_BEZPIECZENSTWA_PRZED_PUBLIKACJA.md`.
+
 ## Zakres i separacja ról
 
 Audyt przeprowadzono w osobnej sesji po zakończeniu implementacji `cart.js`.

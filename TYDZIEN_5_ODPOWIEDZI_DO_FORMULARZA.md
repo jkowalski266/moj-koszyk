@@ -12,8 +12,10 @@ repozytorium. Gałęzią produkcyjną jest `main`.
 gałęzi `main`. GitHub zapisuje commit i wysyła zdarzenie do połączonej aplikacji
 Vercel. Vercel identyfikuje repozytorium, gałąź, SHA i autora commita, pobiera
 migawkę kodu do odizolowanego środowiska budowania, wykrywa projekt Vite,
-instaluje zależności na podstawie plików projektu i uruchamia build produkcyjny.
-Vite tworzy statyczne pliki w katalogu `dist`. Po poprawnym buildzie Vercel
+instaluje zależności na podstawie plików projektu i uruchamia kontrolę wydania.
+Konfiguracja najpierw wykonuje 63 testy automatyczne, w tym testy Red Team i
+regresji bezpieczeństwa. Dopiero po ich zaliczeniu Vite tworzy statyczne pliki
+w katalogu `dist`. Po poprawnym buildzie Vercel
 publikuje wynik na niezmiennym adresie konkretnego wdrożenia, nadaje status
 `Ready`, a następnie automatycznie przypisuje domenę
 `https://moj-koszyk.vercel.app` do nowej wersji.
@@ -76,6 +78,13 @@ adresy wdrożeń, czytelne logi i mechanizm Instant Rollback. Plan Hobby był
 wystarczający do zadania i nie wymagał karty płatniczej. Nie potrzebowaliśmy
 funkcji serwerowych ani osobnej usługi backendowej, ponieważ frontend łączy się
 z Supabase przez publiczny klucz ograniczony przez RLS.
+
+Przed publikacją wykonaliśmy dodatkowy audyt: usunęliśmy wszystkie usterki
+wykryte przez Red Team, dodaliśmy limity zasobów, timeout API, walidację
+konfiguracji Supabase i nagłówki bezpieczeństwa. Skan bieżących plików oraz
+historii Git nie wykrył sekretów. Klucz publishable Supabase może być widoczny
+w przeglądarce, dlatego uprawnienia do danych ogranicza RLS; klucza `service_role`
+ani żadnych innych sekretów nie umieszczamy we frontendzie.
 
 Test planu awaryjnego przeprowadziliśmy praktycznie. Najpierw utworzyliśmy
 stabilne wdrożenie `7jFunXFvz…`, które korzystało z Supabase. Następnie

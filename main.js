@@ -6,6 +6,8 @@ import produktyLokalne from './products.json';
 import { dodajProdukt, obliczSumeGroszy } from './cart.js';
 
 let koszyk = [];
+const MAKSYMALNA_LICZBA_PRODUKTOW = 1_000;
+const LIMIT_CZASU_API_MS = 30_000;
 const formatCeny = new Intl.NumberFormat('pl-PL', {
   style: 'currency',
   currency: 'PLN',
@@ -16,13 +18,49 @@ function formatujCene(cenaGrosze) {
 }
 
 function pobierzProduktyLokalne() {
-  return produktyLokalne.map((produkt, indeks) => ({
-    id: `local-${indeks + 1}`,
-    name: produkt.nazwa,
-    price_cents: Math.round(Number(produkt.cena) * 100),
-    is_active: true,
-    created_at: null,
-  }));
+  if (!Array.isArray(produktyLokalne)) {
+    throw new TypeError('Lokalny katalog produktów musi być tablicą.');
+  }
+
+  return produktyLokalne.map((produkt, indeks) => {
+    if (
+      produkt === null ||
+      typeof produkt !== 'object' ||
+      typeof produkt.nazwa !== 'string' ||
+      typeof produkt.cena !== 'number'
+    ) {
+      throw new TypeError('Lokalny katalog zawiera niepoprawny produkt.');
+    }
+
+    return {
+      id: `local-${indeks + 1}`,
+      name: produkt.nazwa,
+      price_cents: Math.round(produkt.cena * 100),
+      is_active: true,
+      created_at: null,
+    };
+  });
+}
+
+function sprawdzKatalog(produkty) {
+  if (!Array.isArray(produkty)) {
+    throw new TypeError('Katalog produktów musi być tablicą.');
+  }
+
+  if (produkty.length > MAKSYMALNA_LICZBA_PRODUKTOW) {
+    throw new RangeError('Katalog produktów jest zbyt duży.');
+  }
+
+  const sprawdzoneProdukty = new Array(produkty.length);
+  for (let indeks = 0; indeks < produkty.length; indeks += 1) {
+    if (!Object.hasOwn(produkty, indeks)) {
+      throw new TypeError('Katalog produktów nie może być tablicą rzadką.');
+    }
+
+    sprawdzoneProdukty[indeks] = dodajProdukt([], produkty[indeks])[0];
+  }
+
+  return sprawdzoneProdukty;
 }
 
 async function pobierzProduktyZSupabase() {
@@ -36,7 +74,7 @@ async function pobierzProduktyZSupabase() {
     throw new Error(`Supabase: ${error.message}`);
   }
 
-  return data;
+  return sprawdzKatalog(data);
 }
 
 async function pobierzProdukty() {
@@ -49,13 +87,12 @@ async function pobierzProdukty() {
     } catch (error) {
       console.warn(
         'Nie udało się pobrać danych z Supabase. Używam danych lokalnych.',
-        error,
       );
     }
   }
 
   return {
-    produkty: pobierzProduktyLokalne(),
+    produkty: sprawdzKatalog(pobierzProduktyLokalne()),
     zrodlo: 'lokalny katalog produktów',
   };
 }
@@ -81,8 +118,9 @@ async function wczytajProdukty() {
   try {
     const { produkty, zrodlo } = await pobierzProdukty();
 
-    produkty.forEach((produkt) => {
+    for (const produkt of produkty) {
       const przycisk = document.createElement('button');
+      przycisk.type = 'button';
       przycisk.className = 'produkt';
       przycisk.append(
         utworzSpan('produkt-nazwa', produkt.name),
@@ -90,18 +128,23 @@ async function wczytajProdukty() {
       );
       przycisk.addEventListener('click', () => dodajDoKoszyka(produkt));
       listaProduktow.appendChild(przycisk);
-    });
+    }
 
     ustawStatusDanych(`Źródło danych: ${zrodlo}`);
   } catch (error) {
-    console.error('Nie udało się wczytać produktów.', error);
+    console.error('Nie udało się wczytać produktów.');
     ustawStatusDanych('Nie udało się wczytać produktów.', true);
   }
 }
 
 function dodajDoKoszyka(produkt) {
-  koszyk = dodajProdukt(koszyk, produkt);
-  pokazKoszyk();
+  try {
+    koszyk = dodajProdukt(koszyk, produkt);
+    pokazKoszyk();
+  } catch {
+    console.error('Odrzucono niepoprawny produkt lub osiągnięto limit koszyka.');
+    ustawStatusDanych('Nie można dodać tego produktu do koszyka.', true);
+  }
 }
 
 function pokazKoszyk() {
@@ -116,14 +159,14 @@ function pokazKoszyk() {
     listaKoszyka.appendChild(pustyKoszyk);
   }
 
-  koszyk.forEach((produkt) => {
+  for (const produkt of koszyk) {
     const element = document.createElement('li');
     element.append(
       utworzSpan('', produkt.name),
       utworzSpan('', formatujCene(produkt.price_cents)),
     );
     listaKoszyka.appendChild(element);
-  });
+  }
 
   const sumaGrosze = obliczSumeGroszy(koszyk);
   document.getElementById('suma').textContent = formatujCene(sumaGrosze);
@@ -131,6 +174,7 @@ function pokazKoszyk() {
 
 async function wyslijPodsumowanieDoApi() {
   const statusApi = document.getElementById('status-api');
+  const przycisk = document.getElementById('wyslij-podsumowanie');
 
   if (koszyk.length === 0) {
     statusApi.textContent = 'Dodaj co najmniej jeden produkt do koszyka.';
@@ -138,15 +182,23 @@ async function wyslijPodsumowanieDoApi() {
   }
 
   const sumaGrosze = obliczSumeGroszy(koszyk);
+  const productIds = new Array(koszyk.length);
+  for (let indeks = 0; indeks < koszyk.length; indeks += 1) {
+    productIds[indeks] = koszyk[indeks].id;
+  }
+
   const payload = {
     action: 'synthetic-cart-summary',
-    product_ids: koszyk.map((produkt) => produkt.id),
+    product_ids: productIds,
     product_count: koszyk.length,
     total_cents: sumaGrosze,
     requested_at: new Date().toISOString(),
   };
 
   statusApi.textContent = 'Wysyłanie syntetycznego podsumowania…';
+  przycisk.disabled = true;
+  const kontroler = new AbortController();
+  const limitCzasu = setTimeout(() => kontroler.abort(), LIMIT_CZASU_API_MS);
 
   try {
     const odpowiedz = await fetch('https://httpbin.org/post', {
@@ -156,18 +208,22 @@ async function wyslijPodsumowanieDoApi() {
         'X-Client-Name': 'moj-koszyk-demo',
       },
       body: JSON.stringify(payload),
+      signal: kontroler.signal,
     });
 
     if (!odpowiedz.ok) {
       throw new Error(`API zwróciło status ${odpowiedz.status}`);
     }
 
-    const odpowiedzJson = await odpowiedz.json();
-    console.info('Odpowiedź testowego API:', odpowiedzJson);
     statusApi.textContent = `API potwierdziło żądanie (HTTP ${odpowiedz.status}).`;
-  } catch (error) {
-    console.error('Nie udało się wysłać podsumowania do API.', error);
-    statusApi.textContent = 'Nie udało się połączyć z testowym API.';
+  } catch {
+    console.error('Nie udało się wysłać podsumowania do API.');
+    statusApi.textContent = kontroler.signal.aborted
+      ? 'Testowe API nie odpowiedziało w wymaganym czasie.'
+      : 'Nie udało się połączyć z testowym API.';
+  } finally {
+    clearTimeout(limitCzasu);
+    przycisk.disabled = false;
   }
 }
 
