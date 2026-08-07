@@ -8,3 +8,8 @@ pnpm-workspace.yaml
 
 # Bezpieczny szablon bez prawdziwych wartości pozostaje w repozytorium.
 !.env.example
+
+# Lokalne materiały robocze i wygenerowane prezentacje nie trafiają do repozytorium.
+.presentation_work_week5/
+*.pptx
+*.pptx.inspect.ndjson
