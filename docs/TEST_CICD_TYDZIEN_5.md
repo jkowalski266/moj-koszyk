@@ -9,6 +9,9 @@ Nie zmienia kodu ani zachowania aplikacji.
 - publiczny adres: `https://moj-koszyk.vercel.app`;
 - data testu: 7 sierpnia 2026 r.
 
-Po wysłaniu tego pliku przez `git push` panel Vercel powinien automatycznie
-pobrać commit, wykonać `npm run build`, opublikować katalog `dist` i przypisać
-domenę produkcyjną do nowego wdrożenia.
+Po wysłaniu zmiany przez `git push` Vercel automatycznie wykrył commit.
+Pierwsza próba została zatrzymana przed buildem z powodu nieprawidłowego,
+lokalnego adresu autora Git. Po ustawieniu wyłącznie w tym repozytorium adresu
+GitHub `noreply` pusty commit `e002937` uruchomił pełny potok. Build trwał 5 s,
+Vite przetworzył 49 modułów, wdrożenie uzyskało status `Ready`, a domena
+produkcyjna została przypisana automatycznie.
